@@ -68,7 +68,7 @@ begin
 end;
 $$;
 
-a create or replace function public.add_coins(p_amount int, p_reason text, p_ref text default null)
+create or replace function public.add_coins(p_amount int, p_reason text, p_ref text default null)
 returns int language plpgsql security definer set search_path = public as $$
 declare new_balance int;
 begin
