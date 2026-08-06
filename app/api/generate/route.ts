@@ -22,13 +22,11 @@ interface AitunelResponse { data?: AitunelImageItem[]; error?: { message?: strin
 export async function POST(request: Request) {
   const apiKey = process.env.AITUNEL_API_KEY;
   if (!apiKey) return jsonError(500, "Сервер не настроен: отсутствует AITUNEL_API_KEY.");
-
   const user = await getServerUser();
   if (!user) return jsonError(401, "Требуется авторизация.");
 
   let form: FormData;
   try { form = await request.formData(); } catch { return jsonError(400, "Ожидался multipart/form-data запрос."); }
-
   const rawFiles = form.getAll("files").concat(form.getAll("file"));
   const files = rawFiles.filter((f): f is File => typeof f !== "string" && f !== null);
   const presetId = String(form.get("presetId") ?? "").trim();
@@ -38,14 +36,13 @@ export async function POST(request: Request) {
   const preset = await getTrendBySlug(presetId);
   if (!preset) return jsonError(404, `Пресет «${presetId}» не найден.`);
 
-  const MAX_PHOTOS = 10;
   const photos: { name: string; type: string; buffer: Buffer }[] = [];
   for (const [i, f] of files.entries()) {
-    if (i >= MAX_PHOTOS) break;
+    if (i >= 10) break;
     if (!f.type.startsWith("image/")) return jsonError(400, "Поддерживаются только изображения.");
     const buf = Buffer.from(await f.arrayBuffer());
     if (buf.byteLength === 0) return jsonError(400, "Файл пустой.");
-    if (buf.byteLength > MAX_UPLOAD_BYTES) return jsonError(413, "Файл слишком большой (до 30 МБ).":);
+    if (buf.byteLength > MAX_UPLOAD_BYTES) return jsonError(413, "Файл слишком большой (до 30 МБ).");
     photos.push({ name: f.name || `selfie-${i}.jpg`, type: f.type, buffer: buf });
   }
 
