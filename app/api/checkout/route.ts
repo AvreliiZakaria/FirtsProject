@@ -6,11 +6,8 @@ import { getPackageById, coinsFor } from "@/lib/packages";
 export const runtime = "nodejs";
 
 /**
- * Mock checkout. In production this is where you'd create a YooKassa/Robokassa
- * payment, redirect to the provider, and credit coins only after the webhook
- * confirms a paid status. For MVP we credit immediately.
- *
- * Body: { packageId: string }. Validates the package id against the catalogue.
+ * Checkout is intentionally fail-closed until a real payment webhook is wired.
+ * Set ALLOW_MOCK_CHECKOUT=true only for local QA. Never enable it in production.
  */
 export async function POST(request: Request) {
   const user = await getServerUser();
@@ -18,6 +15,17 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { success: false, error: "Требуется авторизация." },
       { status: 401 }
+    );
+  }
+
+  if (process.env.ALLOW_MOCK_CHECKOUT !== "true") {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Оплата ещё не подключена. Монеты начисляются только после подтверждения платежа.",
+      },
+      { status: 503 }
     );
   }
 
